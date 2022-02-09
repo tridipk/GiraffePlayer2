@@ -237,6 +237,15 @@ public class LazyLoadManager extends IntentService {
         String szName;
         while ((zipEntry = inZip.getNextEntry()) != null) {
             szName = zipEntry.getName();
+            String outputDir = output.getAbsolutePath();
+            File outputFile = new File(outputDir, szName);
+            try {
+                ensureZipPathSafety(outputFile, outputDir);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return;
+            }
+
             if (zipEntry.isDirectory()) {
                 // get the folder name of the widget
                 szName = szName.substring(0, szName.length() - 1);
@@ -260,6 +269,14 @@ public class LazyLoadManager extends IntentService {
             }
         }
         inZip.close();
+    }
+
+    private static void ensureZipPathSafety(final File outputFile, final String destDirectory) throws Exception {
+        String destDirCanonicalPath = (new File(destDirectory)).getCanonicalPath();
+        String outputFileCanonicalPath = outputFile.getCanonicalPath();
+        if (!outputFileCanonicalPath.startsWith(destDirCanonicalPath)) {
+            throw new Exception("Found Zip Path Traversal Vulnerability");
+        }
     }
 
     public static File getPlayerRootDir(Context context) {
